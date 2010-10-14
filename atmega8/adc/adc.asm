@@ -1,20 +1,10 @@
 .include "m8def.inc"
 
-    .def tmp = r15
+    .def tmp = r18
     .def acc = r16 ; Аккумулятор
     .def timer_ctr = R17
-    .def S = R0
     .def push_SPL = R4
     .def push_SPH = R5
-    .def Flag_R = R25 ;0 бит, посылка Rfid считана
-    .def bitcnt = R20
-    .def	system	  	=R18
-    .def	command 	=R19
-    .def paket_byte1 = r1
-    .def paket_byte2 = r2
-    .def paket_byte3 = r3
-    .def paket_byte4 = r6
-    .def	parity		=R21
     
 
 ; Макросы=============================================
@@ -159,11 +149,15 @@ usart_recieve:
 ; Обработчики прерываний
 ADC_INT:
     in acc, adch
-    ;cpi acc, 0x34
-    ;brlo END_ADC
-    rcall usart_transmit
+    ;cpi timer_ctr, 48
+    ;brsh END_ADC
+    ;reti
+;
 END_ADC:
-	RETI
+    rcall usart_transmit
+    ;clr timer_ctr
+	reti
+;
 TIMER2_COMP:
 	;in	S,sreg ;запоминаем регистр статуса
 	inc	timer_ctr

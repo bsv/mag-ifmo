@@ -251,7 +251,6 @@ preambula_yes:
 fault:
 ;
 	ldi	system,15
-;
 	out SPL,push_SPL
 ;
 	ret	
@@ -279,11 +278,8 @@ read_nibl:
 	clr	system
 ;
 	rcall	sample
-;
 	clc
-;
 	ror	system
-;
 	ret
 ;
 ;----------------------------------------------------------------
@@ -301,11 +297,8 @@ bit_is_a_0:	sec
 ;
 bit_is_a_0a:	cpi	timer_ctr,144	;число прерываний (int osc 8Mhz)
 		brsh	fault
-;		
 		sbiC	ACSR,ACO
-;	
 		rjmp	bit_is_a_0a	
-;
 		clr	timer_ctr
 		rjmp	nextbit
 ;
@@ -314,20 +307,14 @@ bit_is_a_0a:	cpi	timer_ctr,144	;число прерываний (int osc 8Mhz)
 bit_is_a_1:
 		clc			
 		rol	system
-;
 bit_is_a_1a:	cpi	timer_ctr,144	;число прерываний (int osc 8,0Mhz)	
 		brsh	fault		
-;		
 		sbiS	ACSR,ACO
-;		
 		rjmp	bit_is_a_1a	
-;
 		clr	timer_ctr
-;
 nextbit:
 		dec	bitcnt		
 		brne	sample		
-;
 	ret
 ;
 ;----------------------------------------

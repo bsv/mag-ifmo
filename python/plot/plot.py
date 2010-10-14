@@ -11,7 +11,7 @@ class PlotGui(QWidget):
 
     com_reader = 0
     border = 0.1
-    scale = 1000
+    scale = 500
     mas = [x for x in xrange(scale)]
 
     def __init__(self, parent=None):
@@ -21,7 +21,7 @@ class PlotGui(QWidget):
         self.setGeometry(200, 200, 500, 500)
         self.setWindowTitle("Plot Gui")
         
-        self.com_reader = ComReader('/dev/ttyUSB0', 500000)
+        self.com_reader = ComReader('/dev/ttyUSB0', 19200)
         
     def paintEvent(self, event):
        
@@ -66,6 +66,7 @@ class PlotGui(QWidget):
             #t = time.time()    
             self.mas = [self.com_reader.read() for x in xrange(self.scale)]
             #print "Rate ", self.scale/(time.time() - t)
+            qApp.processEvents()
             self.repaint()
             
     def keyPressEvent(self, event):
