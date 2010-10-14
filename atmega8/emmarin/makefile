@@ -5,7 +5,7 @@ NAME   = emmarin
 PORT   = /dev/ttyUSB0
 
 all : $(NAME).asm
-	$(ASM) -l list -m map $(NAME).asm
+	$(ASM) $(NAME).asm
 
 load: $(NAME).hex
 	$(LOADER) -p m8 -P $(PORT) -c $(PROG) -U flash:w:$(NAME).hex
