@@ -13,6 +13,7 @@ class PlotGui(QWidget):
     border = 0.1
     scale = 500
     mas = [x for x in xrange(scale)]
+    f_data = 0
 
     def __init__(self, parent=None):
         
@@ -22,13 +23,12 @@ class PlotGui(QWidget):
         self.setWindowTitle("Plot Gui")
         
         self.com_reader = ComReader('/dev/ttyUSB0', 19200)
+        self.f_data = open("f_data.txt", "w")
         
     def paintEvent(self, event):
        
         paint = QPainter()
         pen = QPen()
-        
-        
         
         size = self.size()
         
@@ -64,16 +64,22 @@ class PlotGui(QWidget):
         while(self.com_reader.isOpen()):
         #if self.com_reader.isOpen():
             #t = time.time()    
-            self.mas = [self.com_reader.read() for x in xrange(self.scale)]
+            for x in xrange(self.scale):
+                ch = self.com_reader.read()
+                self.mas[x] = ch
+                self.f_data.write("%d\n" % ch)
+                #print "%d" % ord(ch)
+            #self.mas = [self.com_reader.read() for x in xrange(self.scale)]
             #print "Rate ", self.scale/(time.time() - t)
             qApp.processEvents()
             self.repaint()
             
     def keyPressEvent(self, event):
     
-        if event.key == Qt.Key_End:
+        if event.key == Qt.Key_Down:
             self.com_reader.close()
             self.quit()
+            self.f_data.close()
             print "quit"
         else:
             self.startRead()
