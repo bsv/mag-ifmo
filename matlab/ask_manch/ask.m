@@ -4,65 +4,52 @@ close all % закрываем все графики
 fd = 250; % частота дискретизации
 fc = 20; % несущая чатота
 time = 0:1/fd:20; % шкала времени
-code = [1 1 1 1 1]; % передаваемые данные
+code = [1 0 0 1 1]; % передаваемые данные
 m = 0.65; % коэффициент модуляции
 ac = 1; % амплитуда несущего сигнала
 
 sm = manch(time, code); % преобразуем данные в манчестерский код
 sam = ac*(1 + m*sm).*cos(fc*time); % модулируем несущую
 
-subplot(3, 1, 1);
+subplot(2, 1, 1);
 plot(time, sm);
 grid on;
 axis([min(time) max(time) -2 2]);
 
-subplot(3, 1, 2);
+subplot(2, 1, 2);
 plot(time, sam);
 axis([min(time) max(time) -2 2]);
 grid on;
 %% Демодуляция сигнала методом синхронного детектирования
 
+figure;
+subplot(4, 1, 1);
+plot(time, sam);
+
 period = (time(numel(time))-time(1))/numel(code); % период модулирующего сигнала
 z = demsync(sam, time, period, fc);
-subplot(3, 1, 3);
+subplot(4, 1, 2);
 plot(time,z);
 
 %% Генерция шума 
 
-figure;
 snr = 1; % сигнал/шум
-noise = awgn(sam, snr);
-subplot(2, 1, 1);
+noise = awgn(sam, snr, 'measured');
+subplot(4, 1, 3);
 plot(time, noise);
 
 z = demsync(noise, time, period, fc);
-subplot(2, 1, 2);
+subplot(4, 1, 4);
 plot(time, z);
-
-%% Выделение амплитуды с помощью сети Элмана
-
-%N = 600; % количество обучающих выборок
-%smseq = con2seq(sm(1:N)); % преобразуем из последовательности в марицу
-%samseq = con2seq(sam(1:N));
-
-%net = newelm(samseq, smseq, 1);
-%net = train(net, samseq, smseq);
-
-%a = sim(net, con2seq(sam));
-
-%subplot(2, 1, 1);
-%plot(time, cat(2, a{:}), '--');
-
-%subplot(2, 1, 2);
-%plot(time, sam);
+axis([min(time) max(time) 0 1]);
 
 %% Демодуляция с помощью нейронной сети
 
-num_in = 20;
+num_in = 25;
 interval = 5;
 min_max = minmax(sam);
 
-snr = 1; % сигнал/шум
+snr = 0.5; % сигнал/шум
 noise = awgn(sam, snr);
 
 in_range = [];
@@ -78,9 +65,10 @@ inter_val = intsample(sam, interval, num_in);
 noise_inter_val = intsample(noise, interval, num_in);
 
 net = newc(in_range, 2, 0.01, 0.001); % 2 нейрона
-net.trainParam.epochs = 200;
+net.trainParam.epochs = 50;
 net = init(net);
 net = train(net, noise_inter_val);
+%load net;
 
 figure;
 subplot(5, 1, 1);
@@ -114,48 +102,48 @@ plot(time, sm);
 axis([min(time) max(time) -2 2]);
 
 %% Испытаем сеть на других данных
-code2 = [0 1 0 1 1]; % передаваемые данные
+code2 = [1 0 0 1 1]; % передаваемые данные
 sm2 = manch(time, code2); % преобразуем данные в манчестерский код
 sam2 = ac*(1 + m*sm2).*cos(fc*time); % модулируем несущую
 
-% Добавим шума
-snr2 = 1; % сигнал/шум
-noise2 = awgn(sam2, snr2);
+    % Добавим шума
+    snr2 = 1; % сигнал/шум
+    noise2 = awgn(sam2, snr2);
 
-% Построим график
-noise_val2 = vec2group(noise2, num_in);
-in_val2 = vec2group(sam2, num_in);
+    % Построим график
+    noise_val2 = vec2group(noise2, num_in);
+    in_val2 = vec2group(sam2, num_in);
 
-% немного сдвигаем выборку
-%interval = 15;
-% Интервальная выборка
-inter_val2 = intsample(sam2, interval, num_in);
-noise_inter_val2 = intsample(noise2, interval, num_in);
+    % немного сдвигаем выборку
+    %interval = 15;
+    % Интервальная выборка
+    inter_val2 = intsample(sam2, interval, num_in);
+    noise_inter_val2 = intsample(noise2, interval, num_in);
 
-figure;
-subplot(5, 1, 1);
-plot(time, sam2);
+    figure;
+    subplot(5, 1, 1);
+    plot(time, sam2);
 
-onet2 = sim(net, inter_val2);
-simres2 = koh2vec(onet2, num_in);
-simres2 = stretch(simres2, num_in, interval);
-subplot(5, 1, 2);
-plot(time(1:numel(simres2)), simres2);
-axis([min(time) max(time) -2 2]);
+    onet2 = sim(net, inter_val2);
+    simres2 = koh2vec(onet2, num_in);
+    simres2 = stretch(simres2, num_in, interval);
+    subplot(5, 1, 2);
+    plot(time(1:numel(simres2)), simres2);
+    axis([min(time) max(time) -2 2]);
 
-subplot(5, 1, 3);
-plot(time, noise2)
+    subplot(5, 1, 3);
+    plot(time, noise2)
 
-onet2 = sim(net, noise_inter_val2);
-noise_res2 = koh2vec(onet2, num_in);
-noise_res2 = stretch(noise_res2, num_in, interval);
-subplot(5, 1, 4);
-plot(time(1:numel(noise_res2)), noise_res2);
-axis([min(time) max(time) -2 2]);
+    onet2 = sim(net, noise_inter_val2);
+    noise_res2 = koh2vec(onet2, num_in);
+    noise_res2 = stretch(noise_res2, num_in, interval);
+    subplot(5, 1, 4);
+    plot(time(1:numel(noise_res2)), noise_res2);
+    axis([min(time) max(time) -2 2]);
 
-subplot(5, 1, 5);
-plot(time, sm2);
-axis([min(time) max(time) -2 2]);
+    subplot(5, 1, 5);
+    plot(time, sm2);
+    axis([min(time) max(time) -2 2]);
 
 
 
