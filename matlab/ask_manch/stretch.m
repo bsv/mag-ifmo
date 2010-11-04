@@ -1,4 +1,4 @@
-function [ out_res ] = stretch(simres, num_in, interval)
+function [ out_res ] = stretch(simres, num_in, interval, time_ctr)
 %STRETCH Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -9,6 +9,7 @@ for i = 1:num_in:numel(simres)
     end
 end
 
+out_res = [out_res zeros(1, time_ctr - numel(out_res))];
 
 end
 

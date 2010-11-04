@@ -1,4 +1,4 @@
-function [ simres ] = koh2vec(onet, num_in)
+function [ simres ] = koh2vec(onet, num_in, time_ctr)
 %Преобразует результаты симуляции сети Кохонена
 %в вектор 0 и 1
 %   Для сети с 2 выходами
@@ -12,5 +12,6 @@ function [ simres ] = koh2vec(onet, num_in)
         end
     end
 
+    simres = [simres zeros(1, time_ctr - numel(simres))];
 end
 

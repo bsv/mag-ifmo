@@ -3,8 +3,7 @@ function [ out ] = vec2group(vec, num_in )
     
     out = [];
     for i = num_in:num_in:numel(vec)
-        out = [[out] {vec(i-num_in+1:i)'}];
+        out = [[out] {abs(vec(i-num_in+1:i))'}];
     end
-
 end
 
