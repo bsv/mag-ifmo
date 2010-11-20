@@ -2,7 +2,7 @@
 
     .def tmp = r18
     .def acc = r16 ; Аккумулятор
-    .def timer_ctr = R17
+    .def div_ctr = R17
     .def push_SPL = R4
     .def push_SPH = R5
     
@@ -101,13 +101,13 @@ RESET:
 
     ;старший бит равен 1 - записываем в ucsrc, иначе в ubrrh
     outi ucsrc, (1<<ursel)|(3<<ucsz0); асинхронный режим, 1 стоп-бит, без крнтроля четности
-    outi ubrrl, 0x33 ; 51(0x33) - скорость 19200, 1 - 500000
+    outi ubrrl, 0x10 ; 51(0x33) - скорость 19200, 1 - 500000, 16 - 57600
     outi ubrrh, 0x00 ; 
     outi ucsrb, (1<<RXEN)|(1<<TXEN) ; разрешить прием и передачу USART
 
 ;Настрйка АЦП.
     outi admux,0b01100001 ; pin pc0(adc0)
-	outi adcsra,(1<<ADEN)|(1<<ADIE)|(1<<ADSC)|(1<<ADFR)|(3<<ADPS0)
+	outi adcsra,(1<<ADEN)|(1<<ADIE)|(1<<ADSC)|(1<<ADFR)|(7<<ADPS0)
 	
 	;cbi	ADCSRA,ADEN ; ацп выключен !!!!!!!!!!!!!!!!!
 	
@@ -116,7 +116,7 @@ RESET:
     ; запускается в режиме сброса при сравнении, при сравнении инвертирует
     ; порт PB3 (OC2)
 	outi OCR2, 63 ; константа сравнения при тактированании таймера от 8 MHz = 32	
-    outi TIMSK, 1<<OCIE2; генерировать прерывание при сравнении
+    outi TIMSK, 1 << OCIE2; генерировать прерывание при сравнении
 
 ;Настрйка блока сравнения.
 	cbi	ACSR,ACD		;компаратор включен
@@ -149,18 +149,19 @@ usart_recieve:
 ; Обработчики прерываний
 ADC_INT:
     in acc, adch
-    ;cpi timer_ctr, 48
-    ;brsh END_ADC
-    ;reti
+    cpi div_ctr, 4
+    breq END_ADC
+    inc div_ctr
+    reti
 ;
 END_ADC:
     rcall usart_transmit
-    ;clr timer_ctr
+    clr div_ctr
 	reti
 ;
 TIMER2_COMP:
 	;in	S,sreg ;запоминаем регистр статуса
-	inc	timer_ctr
+	;inc	timer_ctr
     ;mov acc, timer_ctr
     ;rcall iusart_transmit
 	;out	sreg, S

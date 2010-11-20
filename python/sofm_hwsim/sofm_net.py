@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+#
 import random
 import time
 import copy
@@ -9,7 +9,7 @@ class sofm_net:
     w = []
     struct_net = []
     p = []
-    count_reinit = 49 # 50-1
+    count_reinit = 100 # 50-1
     
     def __init__(self, struct_net = [], w = []):
         
@@ -80,6 +80,9 @@ class sofm_net:
     
         num_win = self.sim_net(x)
         n = self.calc_n(self.p[num_win])
+        
+        #n = 0.75
+        
         self.calc_w(n, x, num_win)
         if(self.p[num_win] != 0):
             self.p[num_win] -= 1
@@ -91,11 +94,11 @@ class sofm_net:
                         self.w[num] = copy.deepcopy(self.w[num_win])
     
     def net_train(self, x, count = 1, eps = 0.01):
-    
+        
         for epoch in xrange(count):
             for i in xrange(len(x)):
                 self.calc_epoch(x[i], i)
-
+            #print epoch
                 #print 'num_win=' , num_win
                 #print 'n = ', n
                 #print p
@@ -111,5 +114,6 @@ class sofm_net:
         
         #print 'epoch = ', epoch, 'qe =', qe
         #print p
+        #print self.quant_err(x)
         return epoch
             
