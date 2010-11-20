@@ -1,0 +1,14 @@
+# -*- coding: utf-8 -*-
+
+from sofm_net import *
+
+p = sofm_net([2, 4])
+print p.w
+x = [[0, 256], [234, 22], [1, 2], [333, 2]]
+for x_cur in x:
+    print p.sim_net(x_cur)
+p.net_train(x,100)
+
+for x_cur in x:
+    #x_c = p.norm_vec(x_cur)
+    print p.sim_net(x_cur)

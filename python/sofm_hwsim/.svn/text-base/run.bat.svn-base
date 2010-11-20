@@ -1,0 +1,3 @@
+type nul > bmp_w
+python test.py spec.bmp spec_out.bmp
+pause

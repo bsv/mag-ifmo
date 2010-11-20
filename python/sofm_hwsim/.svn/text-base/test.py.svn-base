@@ -1,0 +1,107 @@
+# -*- coding: utf-8 -*-
+
+from bmp.bitMap import *
+from sofm_net import *
+import pickle
+import sys
+import cProfile
+import profile
+import psyco
+from psyco.classes import *
+import time
+
+def test_main():
+    file_in = sys.argv[1]
+    file_out = sys.argv[2]
+    #+++++++++++++++++++++++++++++++++++++++++++++++=Main
+    f= file('bmp/'+file_in, "rb")
+    info = bmInfo(f)
+
+    pixMas = readPixMas(f, info[BFOFFBITS], info[BIHEIGHT] * info[BIWIDTH], info[BIBITCOUNT])
+    getInfo(info)
+    f.seek(0)
+    head = f.read(info[BFOFFBITS])
+    f.close()
+    print 'LEN PIXMAS', len(pixMas)
+    print 'RGB'
+    for  i in xrange(len(pixMas)):
+        pixMas[i] = toRGB(pixMas[i])
+    #seq = seqToMdem(pixMas, 16)
+    #print len(seq)
+    #print len(seq[1])
+    # Находим веса
+    struct_net = [3, 16]
+    f_weight = file('bmp_w', 'r+b')
+    try:
+        w = pickle.load(f_weight)
+        print 'Load weight'
+        snet = sofm_net(struct_net, w)
+
+    except EOFError:
+        f_weight.seek(0,0)
+        snet = sofm_net(struct_net)
+        print 'CALC W'
+        start = time.time()
+        snet.net_train(pixMas)
+        print  "TIME TRAIN= ", time.time()-start
+        pickle.dump(snet.w, f_weight)
+    f_weight.close()
+
+    color_map = ''
+    print 'COLOR_MAP PROCCESS'
+    per_old = -1
+    len_pm = len(pixMas)
+    for i in xrange(len_pm):
+        color_map += digToStr(snet.sim_net(pixMas[i]),1)
+        per = (float(i)/len_pm)*100
+        if((int(per) % 10) == 0):
+            if(per_old != int(per)):
+                print int(per)
+                per_old = int(per)
+    print '+'
+
+    #Сохраняем данные
+    print 'SAVE DATA'
+    f_comp = file('bmp/comp', 'wb')
+    f_comp.write(head)
+    f_comp.write(color_map)
+    f_comp.close()
+
+    # Восстанавливаем изображение
+    print 'RESTORE DATA'
+    f_load = file('bmp/comp', 'rb')
+    head = f_load.read(info[BFOFFBITS])
+    color_map = f_load.read()
+    print 'LEN COLOR_MAP', len(color_map)
+    f_comp.close()
+    cm = []
+    lcm = len(color_map)
+    per_old = -1
+    for i in xrange(lcm):
+        cm += [strToDig(color_map[i])]
+        per = (float(i)/lcm)*100
+        if((int(per) % 10) == 0):
+            if(per_old != int(per)):
+                print int(per)
+                per_old = int(per)
+    color_map = cm
+    pm_out = []
+    for color in color_map:
+        pm_out += [to24bit(snet.w[color])]
+
+    f_out = file('bmp/'+file_out, 'wb')
+    # Запись заголовка
+    f_out.write(head)
+    # Запись битового массива
+    for pix in pm_out:
+        data_write = digToStr(pix, info[BIBITCOUNT]/8)
+        f_out.write(data_write)
+    f_out.close()
+    
+    
+psyco.bind(sofm_net.net_train)
+psyco.bind(sofm_net.sim_net)
+psyco.bind(sofm_net.calc_epoch)
+#cProfile.run("test_main()")
+test_main()
+

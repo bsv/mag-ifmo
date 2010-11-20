@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/117/trunk/python/sofm_hwsim
+END
+dist.txt
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/86/trunk/python/sofm_hwsim/dist.txt
+END
+sofm_net.py
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/107/trunk/python/sofm_hwsim/sofm_net.py
+END
+bmp_w
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/94/trunk/python/sofm_hwsim/bmp_w
+END
+test.py
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/117/trunk/python/sofm_hwsim/test.py
+END
+run.bat
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/94/trunk/python/sofm_hwsim/run.bat
+END
+proba.py
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/37/trunk/python/sofm_hwsim/proba.py
+END

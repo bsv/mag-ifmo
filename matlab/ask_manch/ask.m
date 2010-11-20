@@ -3,8 +3,8 @@ init;
 m = 0.65; % коэффициент модуляции
 
 np = floor((max_time/msg_len)*fd);
-%sam = modulate(sm, fc, fd, 'amdsb-tc', -m); % амплитудная модуляция
-sam = (1 + m*sm).*cos(2*pi*fc*time); % амплитудная модуляция
+sam = modulate(sm, fc, fd, 'amdsb-tc', -m); % амплитудная модуляция
+%sam = (1 + m*sm).*cos(2*pi*fc*time); % амплитудная модуляция
 
 subplot(2, 1, 1);
 plot(time, sm);
@@ -79,7 +79,7 @@ num_in = ceil(e*period/2*fd)
 
 min_max = minmax(sam);
 
-snr = 1; % сигнал/шум
+snr = 0.5; % сигнал/шум
 noise = awgn(sam, snr, 'measured');
 
 % Мин и макс значения для каждого входа сети
