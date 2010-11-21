@@ -7,34 +7,7 @@
 
 from pylab import *
 from sofm_net import *
-import csv
-
-def read_file(file_name):
-    
-    data_file = open(file_name, 'rb')
-    data_reader = csv.reader(data_file, delimiter = ',')
-    x = []
-    for row in data_reader:
-        line = []
-        for cell in row:
-            line += [int(float(cell))]
-        x += [line]
-    
-    data_file.close()
-
-    return x
-
-def norm_vec(vec, max_val):
-    
-    if (min(vec) < 0):
-        shift = abs(min(vec))
-
-    norm_val = max(vec) + shift
-
-    for i in xrange(size(vec)):
-        vec[i] = int((float(vec[i] + shift)/norm_val) * max_val)
-    return vec
-
+from func import *
     
 data = read_file(sys.argv[1])
 
@@ -65,13 +38,14 @@ for cur in y:
         net_data_in += [slice_data]
         ctr = 0;
         slice_data = []
-print ctr
-print len(net_data_in)
-print net_data_in[0]
 
 # Создаем сеть и обучаем её
 p = sofm_net([num_in, num_neuron])
 p.net_train(net_data_in, num_epoch)
+print p.w
+
+for i in xrange(len(p.w)):
+    mem_form('w' + str(i), p.w[i], num_in)
 
 # Формируем выходные данные
 net_data_out = []
@@ -82,9 +56,6 @@ for cur in net_data_in:
 # Строим графики
 subplot(211)
 plot(x, y)
-
-print len(y)
-print len(net_data_out)
 
 subplot(212)
 plot(range(size(net_data_out)), net_data_out)

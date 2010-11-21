@@ -22,8 +22,8 @@ class sofm_net:
                 w_new = []
                 for j in xrange(self.struct_net[0]): # struct_net[1] - количество входов
                     #w_new.append(random.randrange(0, 5)/50.0) 
-                    #w_new.append(random.randrange(0, 256)) 
-                    w_new.append(255.0/(i+1)) 
+                    w_new.append(random.randrange(0, 256)) 
+                    #w_new.append(int(255.0/(i+1))) 
                 self. w.append(w_new)
         else:
             self.w = w
@@ -35,7 +35,7 @@ class sofm_net:
             di = 0
             w = self.w[i]
             for j in xrange(len(self.w[i])):
-                di += abs((x[j] - w[j]))
+                di += abs(x[j] - w[j])
             if(i == 0):
                 d_min = di
                 ind = i
@@ -48,7 +48,7 @@ class sofm_net:
         
         w = self.w[num_win]
         for i in xrange(len(x)):
-            w[i] += n * (x[i] - w[i])
+            w[i] += int(n * (x[i] - w[i]))
     
     def quant_err(self, x):
         
