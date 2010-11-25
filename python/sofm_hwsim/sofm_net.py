@@ -116,4 +116,11 @@ class sofm_net:
         #print p
         #print self.quant_err(x)
         return epoch
-            
+       
+    def masOut(self, data):
+        
+        out = []
+        for cur in data:
+            out_val = self.sim_net(cur)
+            out += [out_val for i in xrange(self.struct_net[0])]
+        return out

@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import csv
-
-
-def read_file(file_name):
+def readCsvFile(file_name):
     
     data_file = open(file_name, 'rb')
-    data_reader = csv.reader(data_file, delimiter = ',')
+
     x = []
-    for row in data_reader:
+    for row  in data_file.readlines():
         line = []
-        for cell in row:
+        for cell in row.split(','):
             line += [int(float(cell))]
         x += [line]
     
@@ -18,7 +15,7 @@ def read_file(file_name):
 
     return x
 
-def norm_vec(vec, max_val):
+def normVec(vec, max_val):
     
     shift = 0
     if (min(vec) < 0):
@@ -34,16 +31,18 @@ def norm_vec(vec, max_val):
 bit_size = lambda max_data: 0 if max_data == 0 else bit_size(max_data >> 1) + 1
  
 # Создаем модули весов(Verilog)
-def mem_form(name, weights, num_in):
+def memForm(name, weights, num_in):
     f_out = open(name + '.v', 'w')
     
+    max_w = max(weights)
+
     module_str  = """module %(name)s (
     input wire [%(addr_size)d:0] addr,
     output wire [%(data_size)d:0] out_weight
 );
-    wire [%(data_size)d:0] w [%(num_w)d:0]
+    wire [%(data_size)d:0] w [%(num_w)d:0];
     
-    assign out_weight = w[addr];\n""" % {'name': name, 'addr_size': bit_size(num_in - 1), 'data_size': 8, 'num_w': num_in - 1}
+    assign out_weight = w[addr];\n""" % {'name': name, 'addr_size': bit_size(num_in - 1) - 1, 'data_size': bit_size(max_w) - 1, 'num_w': num_in - 1}
 
     for i in xrange(len(weights)):
         module_str += "    assign w[%(ind)d] = %(w)d;\n" % {'ind': i, 'w':weights[i]}
@@ -52,3 +51,29 @@ def mem_form(name, weights, num_in):
 
     f_out.write(module_str)
     f_out.close()
+
+# Разбиваем входной вектор на группы по num элементов
+def vec2mas(vec, num):
+    out = []
+
+    for i in xrange(0, len(vec), num):
+            out += [vec[i:i + num]]
+
+    # Если последняя группа не содержит num 
+    # элементов, то удаляем её из последовательности 
+    if(len(out[-1]) != num):
+        del out[-1]
+
+    return out
+
+# Выделение битовой последовательности из сигнала
+def sig2bit(data, level, step):
+    
+    bit_seq = []
+    for i in range(0, len(data), step):
+        if(data[i] > level):
+            bit_seq += [1]
+        else: 
+            bit_seq += [0] 
+    return bit_seq
+
