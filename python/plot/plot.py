@@ -49,7 +49,7 @@ class PlotGui(QWidget):
         self.mas = [0 for i in xrange(self.scale)]
 
         self.num_in = num_in
-        self.num_neuron = 3
+        self.num_neuron = 2
         self.num_epoch = num_epoch
         self.net = sofm_net([self.num_in, self.num_neuron])
         self.train = 0
@@ -112,13 +112,21 @@ class PlotGui(QWidget):
         #if self.com_reader.isOpen():
             t = time.time()    
             for x in xrange(self.scale):
-                ch = self.com_reader.read()
-                self.mas[x] = ch
+                ch1 = self.com_reader.read()
+                ch2 = self.com_reader.read()
+                #print 'ch1 = ', ch1
+                #print 'ch2 = ', ch2
+                ch = ch1 << 8 | ch2
+                #print 'CH = ', ch
+                v = (ch - 8192)/8192*1.25*(-1)+1.65
+                self.mas[x] = ch/16384 * 256
                 self.f_data.write("%d\n" % ch)
                 #print "%d" % ord(ch)
             #self.mas = [self.com_reader.read() for x in xrange(self.scale)]
             if(self.run == 1):
                 print "Rate ", self.scale/(time.time() - t)
+                print v
+                print ch - 8192
             qApp.processEvents()
             if(self.run == 1):
                 self.repaint()
