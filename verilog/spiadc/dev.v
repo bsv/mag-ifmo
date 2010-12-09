@@ -18,7 +18,6 @@ module dev(
     output wire AMP_SHDN,
     output wire SPI_MOSI,
     
-    
     // fpga adc
     input  wire AD_DOUT,
     
@@ -26,7 +25,10 @@ module dev(
     
     //fpga UART
     input wire RS232_DTE_RXD,
-    output wire RS232_DTE_TXD
+    output wire RS232_DTE_TXD,
+	 
+	 //fpga J18 connector 1 pin
+	 output wire RFID_CLK
 );
 
     reg r_data, w_data, r_data_next, w_data_next;
@@ -68,6 +70,17 @@ module dev(
         .ready(net_ready),
         .step(net_step),
         .out_data(net_out_data)
+    );
+	 
+	 // 125 êÃö
+	 mod_m_counter #(
+        .M(200), 
+        .N(8)  
+    ) rfid_clk_unit
+    (
+        .clk(CLK),
+        .reset(reset),
+        .max_tick(RFID_CLK)
     );
 
     mod_m_counter #(
@@ -153,7 +166,8 @@ module dev(
         AMP    = 1,
         ADC    = 2,
         ADC_WAIT = 3,
-        SAVE    = 4;
+        SAVE    = 4,
+		WAIT    = 5;
         
     reg [2:0] state, state_next;
     
@@ -194,6 +208,9 @@ module dev(
         begin
             data_out = (data_out << 1) | AMP_DOUT;
         end*/
+		  
+	 reg save = 0;
+    reg [13:0] ch0_data;
     
     always@*
     begin
@@ -236,22 +253,40 @@ module dev(
                     w_data_next = 0;
                     if(adc_end_conv)
                         begin
-                            state_next = /*ADC_WAIT*/SAVE;
-                            /*net_data_in = adc_ch0_out;*/
-                        end
-                    end
-            SAVE:
-                begin
-                    state_next = ADC_WAIT;
-                    if(!data_full /*&& net_ready*/)
-                        begin
-                            //if((adc_ch0_out[7:0] != 8'hFF) && (adc_ch0_out[7:0] != 8'h00))
-                            begin
-                                data_out = adc_ch0_out[7:0];/*{7'h00, net_out_data}*/
-                                w_data_next = 1;
-                            end
+                            save = 0; 
+                            ch0_data = adc_ch0_out;
+                            state_next = SAVE;
                         end
                 end
+            SAVE:
+                begin
+                    if(!data_full)
+                        begin
+                            state_next = WAIT;
+                            w_data_next = 1;
+                            if(!save)
+                                begin
+                                    data_out = {2'h0, ch0_data[13:8]};
+                                end
+                            else
+                                begin
+                                    data_out = ch0_data[7:0];
+                                end
+                        end
+                end
+			   WAIT:
+					begin
+                        w_data_next = 0;
+						if(!save)
+							begin
+								save = 1;
+								state_next = SAVE;
+						   end
+						 else if(!adc_end_conv)
+							begin
+								state_next = ADC_WAIT;
+							end
+                    end
             default: state_next = IDLE;
         endcase
     end

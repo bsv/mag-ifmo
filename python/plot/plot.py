@@ -116,17 +116,18 @@ class PlotGui(QWidget):
                 ch2 = self.com_reader.read()
                 #print 'ch1 = ', ch1
                 #print 'ch2 = ', ch2
-                ch = ch1 << 8 | ch2
+                ch = ch2 << 8 | ch1
                 #print 'CH = ', ch
-                v = (ch - 8192)/8192*1.25*(-1)+1.65
+
+                v = ch*2.5/16384 + 0.4
                 self.mas[x] = ch/16384 * 256
                 self.f_data.write("%d\n" % ch)
                 #print "%d" % ord(ch)
             #self.mas = [self.com_reader.read() for x in xrange(self.scale)]
             if(self.run == 1):
-                print "Rate ", self.scale/(time.time() - t)
-                print v
-                print ch - 8192
+                print "Rate ", (self.scale*2)/(time.time() - t)
+                print "Volt = ", v
+                print "CH = ", ch
             qApp.processEvents()
             if(self.run == 1):
                 self.repaint()
