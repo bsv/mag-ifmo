@@ -35,7 +35,6 @@ module adc
             begin
                 state <= IDLE;
                 ad_conv <= 0;
-                cycle_ctr <= 0;
                 ch0_out <= 0;
                 ch1_out <= 0;
                 end_conv <= 0;

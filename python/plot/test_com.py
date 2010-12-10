@@ -1,8 +1,23 @@
 from com import *
+import sys, time
 
-com_reader = ComReader('/dev/ttyUSB0', 19200)
+com_reader = ComReader('/dev/ttyUSB0', 57600)
 
-while(1):
-    ch = com_reader.read()
-    if ch >  0x07:
-        print "%x" % ch
+cycle = int(sys.argv[1])
+
+f = open('data.txt', 'w')
+t = time.time()
+out = ''
+for i in xrange(cycle):
+
+    ch1 = com_reader.read()
+    ch2 = com_reader.read()
+ 
+    ch = (ch1 << 8) | ch2
+    out += str(i) + ', ' + str(ch) + '\n'
+    #print out
+    
+f.write(out)
+
+print "Rate = ", cycle/(time.time() - t)
+f.close()

@@ -94,8 +94,8 @@ module dev(
     );
     
     mod_m_counter #(
-        .M(367), // 50ÌÃö/2/2000êÃö/34 = 367 --- 2kHz
-        .N(9)  
+        .M(180), // 50ÌÃö/2/2000 Ãö/34 = 367 --- 2kHz
+        .N(8)  
     ) adc_clk_unit
     (
         .clk(CLK),
@@ -254,7 +254,7 @@ module dev(
                     if(adc_end_conv)
                         begin
                             save = 0; 
-                            ch0_data = adc_ch0_out;
+                            ch0_data = (adc_ch0_out & 14'h2000)? ~adc_ch0_out + 1 + 14'h1FFF: 14'h1FFF - adc_ch0_out;
                             state_next = SAVE;
                         end
                 end

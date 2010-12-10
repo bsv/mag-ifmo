@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from  __future__ import division
 
 import sys, time
@@ -6,6 +7,7 @@ sys.path += ['../']
 
 from sofm_hwsim.sofm_net import *
 from com import *
+from scipy.signal import butter, lfilter
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -31,6 +33,7 @@ class PlotGui(QWidget):
     com_reader = 0
     border = 0.1
     scale = 100
+    max_value = 16384
     mas = []
     f_data = 0
     run = 0
@@ -93,16 +96,23 @@ class PlotGui(QWidget):
         
         self.draw(self.mas, 256, [x_border, y_border], [kx, ky], size)
 
-        net_in = data_prepare(self.mas, self.num_in)
-        if(self.train == 0):
-            self.net.net_train(net_in, self.num_epoch)
-            self.train = 1
+        # Обработка данных нейронной сетью
+        #net_in = data_prepare(self.mas, self.num_in)
+        #if(self.train == 0):
+        #    self.net.net_train(net_in, self.num_epoch)
+        #    self.train = 1
 
-        net_out = []
-        for cur in net_in:
-            out = self.net.sim_net(cur)
-            net_out += [out for i in xrange(self.num_in)]
-        self.draw(net_out, 0, [x_border, y_border], [kx, ky*50], size)
+        #net_out = []
+        #for cur in net_in:
+        #    out = self.net.sim_net(cur)
+        #    net_out += [out for i in xrange(self.num_in)]
+        #self.draw(net_out, 0, [x_border, y_border], [kx, ky*50], size)
+
+        # Обработка данных фильтром нижних частот
+        (b, a) = butter(5, 0.1, btype = 'low')
+        bout = lfilter(b, a, self.mas)
+        # print bout
+        self.draw(bout, 0, [x_border, y_border], [kx, ky], size)
        
             
     def startRead(self):
@@ -116,16 +126,15 @@ class PlotGui(QWidget):
                 ch2 = self.com_reader.read()
                 #print 'ch1 = ', ch1
                 #print 'ch2 = ', ch2
-                ch = ch2 << 8 | ch1
+                ch = ch1 << 8 | ch2
                 #print 'CH = ', ch
-
-                v = ch*2.5/16384 + 0.4
-                self.mas[x] = ch/16384 * 256
+                v = ch*2.5/self.max_value + 0.4
+                self.mas[x] = ch/self.max_value*256
                 self.f_data.write("%d\n" % ch)
                 #print "%d" % ord(ch)
             #self.mas = [self.com_reader.read() for x in xrange(self.scale)]
             if(self.run == 1):
-                print "Rate ", (self.scale*2)/(time.time() - t)
+                print "Rate ", 2*self.scale/(time.time() - t)
                 print "Volt = ", v
                 print "CH = ", ch
             qApp.processEvents()
