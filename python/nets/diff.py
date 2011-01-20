@@ -6,7 +6,7 @@
 # 3. - количество циклов обученя
 
 from pylab import *
-from sofm_net import *
+from sofm_hwsim.sofm_net import *
 from func import *
 from scipy.signal import butter, lfilter
     
@@ -19,13 +19,21 @@ for cur in data:
     y += [cur[1]]
 
 # Переносим значения y в зиапазон 0 - 255
-y = normVec(y, 255)
+y = normVec(y, 2**14)
 
 num_in = int(sys.argv[2])
 num_neuron = 2
 num_epoch = int(sys.argv[3])
 
-net_data_in = vec2mas(y, num_in)
+y_diff = []
+n_diff = 8
+for i in xrange(0, size(y)-n_diff, n_diff):
+    summ = 0
+    for j in xrange(n_diff):
+        summ += y[i+j] 
+    y_diff += [summ >> 3]
+
+net_data_in = vec2mas(y_diff, num_in)
 
 # Создаем сеть и обучаем её
 p = sofm_net([num_in, num_neuron])

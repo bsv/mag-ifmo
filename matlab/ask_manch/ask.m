@@ -6,15 +6,24 @@ np = floor((max_time/msg_len)*fd);
 sam = modulate(sm, fc, fd, 'amdsb-tc', -m); % амплитудная модуляция
 %sam = (1 + m*sm).*cos(2*pi*fc*time); % амплитудная модуляция
 
-subplot(2, 1, 1);
+snr = 1; % сигнал/шум
+noise = awgn(sam, snr, 'measured');
+
+subplot(3, 1, 1);
 plot(time, sm);
 grid on;
 axis([min(time) max(time) -2 2]);
 
-subplot(2, 1, 2);
+subplot(3, 1, 2);
 plot(time, sam);
 axis([min(time) max(time) -2 2]);
 grid on;
+
+subplot(3, 1, 3);
+plot(time, noise);
+axis([min(time) max(time) -4 4]);
+grid on;
+
 
 %% Демодуляция стандартными средствами
 
@@ -74,8 +83,6 @@ err
 emin = fc/fd
 e = 1/4%emin;
 num_in = ceil(e*period/2*fd)
-
-%
 
 min_max = minmax(sam);
 
