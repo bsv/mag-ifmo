@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+
+def repeat(x, n):
+    y = []
+    for cur in x:
+        for i in xrange(n):
+            y += [cur]
+    return y
+
 def readCsvFile(file_name):
     
     data_file = open(file_name, 'rb')

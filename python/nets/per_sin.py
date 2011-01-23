@@ -2,7 +2,14 @@ from per_net.per_net import *
 import math
 import sys
 
-x_tmp = xrange(-10, 10, 2)
+Fd = 2400 # символьная скорость
+Fc = 1800 # несущая
+FsFd = 4  # количество отсчетов на один символ
+Fs = Fd * FsFd # частота дискретизации
+
+t = [i/Fs for i in range(N*FsFd)] # дискретное время
+
+x = [2*math.pi*Fc*i for i in t]
 
 x = [[x_tmp[i]/10.0] for i in xrange(len(x_tmp))]
 

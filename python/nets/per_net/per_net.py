@@ -10,14 +10,21 @@ class per_net:
     count_layer = 0
     count_input = 0
     struct_net = []
+    elman_layer = []
+    elman = 0
 
     # struct_net = [count_in, count_neuro_in layer1, ...]
-    def __init__(self, struct_net = [], w = []): 
+    # Если elman != 0, то формируется сеть Элмана с доп слоем
+    def __init__(self, struct_net = [], w = [], elman = 0): 
    
         self.count_input = struct_net[0]
+        self.elman = elman
+        if(elman != 0):
+            self.count_input += struct_net[1] # Добавляем к количеству входов количество выходов первого скрытого слоя 
+            self.elman_layer = [0 for i in xrange(struct_net[1])]
         self.struct_net = struct_net[1:]
-        self.count_layer = len(struct_net) - 1 # -1 так какпервый член списка-это 
-        #количество входов, остальые члены - это количество нейронов в слоях 
+        self.count_layer = len(struct_net) - 1 # -1 так как первый член списка-это 
+        # количество входов, остальные члены - это количество нейронов в слоях 
         
         if (w == []):
             self.w = self.gen_wmas('rand')  
@@ -33,7 +40,7 @@ class per_net:
             # количество входов*на количество нейронов+1 ещё один вес для смещения 
             for j in xrange((struct_net[i]+1)*struct_net[i+1]):
                 if (mode == 'rand'):
-                    w_new = random.randrange(-5, 5)/50.0
+                    w_new = random.randrange(0, 5)/50.0
                 else:
                     w_new = mode 
                 w[i].append(w_new)
@@ -58,13 +65,16 @@ class per_net:
     def sim_net(self, input):
         
         out = [[] for i in xrange(self.count_layer)]
-        input_val = input
+        input_val = input + self.elman_layer
+
         for num_l in xrange(self.count_layer):
             for num_n in xrange(self.struct_net[num_l]):
                 out_i = self.get_out(input_val, num_n, num_l)
                 out[num_l].append(out_i)
             # Значения выходов предыдущего слоя являются входами последующего
-            input_val = out[num_l] 
+            input_val = out[num_l]
+            if(num_l == 0) & (self.elman != 0):
+                self.elman_layer = [math.cos(2*math.pi*i) for i in input_val]
         return out
 
     def sse(self, out, test):
@@ -77,6 +87,7 @@ class per_net:
 
     def alg_bp(self, x, t, dw_old, lam, alph, bet,  n):
 
+        old_elman_layer = copy.deepcopy(self.elman_layer)
         iter_out = self.sim_net(x)
         rev_count_layer = range(self.count_layer)
         rev_count_layer.reverse()
@@ -104,7 +115,7 @@ class per_net:
                         delta = err * o_n * (1-o_n)
                 
                 d_mas[0].append(delta)
-                cur_x = [1] + x                 
+                cur_x = [1] + x + old_elman_layer                 
                 
                 for num_w in xrange(count_in_layer):
                     if ((num_l - 1) < 0):
@@ -133,7 +144,11 @@ class per_net:
             return 0 # Признак ошибки
         #Проверка соответствия входов и выходов структуре сети
         for i in xrange(len(x)):
-            if(len(x[i]) != self.count_input):
+            if self.elman != 0:
+                if len(x[i]) != self.count_input - self.struct_net[0]:
+                    print 'Количество входов в обучающем множестве не соответствует структуре сети' 
+                    return 0
+            elif(len(x[i]) != self.count_input):
                 print 'Количество входов в обучающем множестве не соответствует структуре сети' 
                 return 0
             if(len(t[i]) != self.struct_net[self.count_layer - 1]):

@@ -4,18 +4,13 @@
 
 from __future__ import division
 from pylab import *
-from sofm_net import *
+from sofm_hwsim.sofm_net import *
 from func import *
 from scipy.signal import butter, lfilter
 from random import randrange as rand
 from math import *
-
-def repeat(x, n):
-    y = []
-    for cur in x:
-        for i in xrange(n):
-            y += [cur]
-    return y
+from per_net.per_net import *
+from gnuradio import *
 
 
 N = 1000
@@ -44,7 +39,18 @@ s_qask16 = []
 for i in xrange(N*FsFd):
     s_qask16 += [a1[i]*cos(2*pi*Fc*t[i]) + b1[i]*sin(2*pi*Fc*t[i])]
 
-#plot(t[:200], s_qask16[:200])
+# add noise - не следует воспринимать за шум, просто изменение данных
+noise = []
+for i in xrange(len(s_qask16)):
+    noise += [float(s_qask16[i] + random.gauss(3,1))]
+
+subplot(211)
+plot(t[:200], s_qask16[:200])
+
+subplot(212)
+plot(t[:200], noise[:200])
+
+#show()
 
 # Демодуляция
 
@@ -56,34 +62,35 @@ for i in xrange(N*FsFd):
     y2 += [s_qask16[i] * sin(2*pi*Fc*t[i]) * 2]
 
 (b, a) = butter(2, Fd*2/Fs, btype = 'low')
-y1 = lfilter(b, a, y1)
-y2 = lfilter(b, a, y2)
+fy1 = lfilter(b, a, y1)
+fy2 = lfilter(b, a, y2)
 
-y1 = y1[3:len(y1):FsFd] 
-y2 = y2[3:len(y2):FsFd]
+
+fy1 = fy1[3:len(fy1):FsFd] 
+fy2 = fy2[3:len(fy2):FsFd]
 
 aerr = 0
 berr = 0
 
-for i in xrange(len(y1)):
+for i in xrange(len(fy1)):
 
-    y1[i] = round((y1[i]+3)/2)
-    y2[i] = round((y2[i]+3)/2)
+    fy1[i] = round((fy1[i]+3)/2)
+    fy2[i] = round((fy2[i]+3)/2)
 
-    if (y1[i] < 0):
-        y1[i] = 0
-    elif (y1[i] > 3):
-        y1[i] = 3
+    if (fy1[i] < 0):
+        fy1[i] = 0
+    elif (fy1[i] > 3):
+        fy1[i] = 3
 
-    if (y2[i] < 0):
-        y2[i] = 0
-    elif (y2[i] > 3):
-        y2[i] = 3
+    if (fy2[i] < 0):
+        fy2[i] = 0
+    elif (fy2[i] > 3):
+        fy2[i] = 3
     
-    if(round(y1[i]) != aa[i]):
-        print y1[i], aa[i]
+    if(fy1[i] != aa[i]):
+        print i, '.', fy1[i], aa[i]
         aerr += 1
-    if(y2[i] != bb[i]):
+    if(fy2[i] != bb[i]):
         berr += 1
 
 print 'A error = ', aerr/len(aa)
@@ -95,5 +102,69 @@ plot(aa[:100])
 subplot(212)
 plot(y1[:100])
 
+#show()
+
+# Нейронная сеть
+
+# Тренировочные данные
+
+npack = 4
+sample = s_qask16
+target = aa#repeat(aa, FsFd)
+
+print "SAMPLE = ", len(sample)
+
+#x = [sample[i-npack+1:i+1] for i in range(npack-1, len(sample))]
+#test = [[target[i]] for i in xrange(npack-1, len(target))]
+x = [sample[i-npack:i] for i in range(npack, len(sample) + 1, npack)]
+test = [[target[i]] for i in xrange(len(target))]
+
+nlearn = 100 # количество обучающих выборок
+
+print "len X = ", len(x)
+print 'len test = ', len(test)
+
+pnet = per_net([npack, 100, 1], elman = 0)
+epoch = pnet.per_train(x[:nlearn], test[:nlearn], 1000, 0.01, 0.2)
+
+#
+naerr = 0
+
+out = []
+for i in xrange(len(x)):
+    val = pnet.sim_net(x[i])[pnet.count_layer - 1][0]
+    out += [round(val)]
+    test_val = target[i]
+    if (round(val) != test_val):
+       # print i, '. ', 'val = ', val, ', test_val = ', test_val
+        naerr += 1
+
+    #if i < 100:
+    #    print i, '. ', val, target[npack - 1 + i]
+
+print 'Net error = ', naerr/len(x)
+
+print len(s_qask16)
+print len(out)
+
+scale = 200
+t_plot = [i for i in xrange(len(s_qask16))]
+
+subplot(311)
+plot(t_plot[:scale], s_qask16[:scale])
+
+out = repeat(out, npack)
+subplot(312)
+plot(t_plot[:scale], out[:scale])
+axis([0, t_plot[scale-1], -0.2, 3.2])
+
+ideal = repeat(aa, FsFd)
+
+subplot(313)
+plot(t_plot[:scale], ideal[:scale])
+axis([0, t_plot[scale-1], -0.2, 3.2])
 
 show()
+
+
+
