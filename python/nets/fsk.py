@@ -35,7 +35,7 @@ for i in xrange(len(s_fsk)):
 
 # Нейронная сеть
 
-npack = 5
+npack = 25
 nlearn = 500
 
 sample = s_fsk

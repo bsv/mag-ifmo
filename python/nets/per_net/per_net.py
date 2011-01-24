@@ -74,7 +74,8 @@ class per_net:
             # Значения выходов предыдущего слоя являются входами последующего
             input_val = out[num_l]
             if(num_l == 0) & (self.elman != 0):
-                self.elman_layer = [math.cos(2*math.pi*i) for i in input_val]
+                #self.elman_layer = [1/(1 + math.exp(-i)) for i in input_val]
+                self.elman_layer = copy.deepcopy(input_val)
         return out
 
     def sse(self, out, test):
@@ -82,7 +83,7 @@ class per_net:
         err = 0
         for i in xrange(len(out)):
             for j in xrange(len(out[i])):
-                err += ((test[i])[j]-(out[i])[j])**2
+                err += (test[i][j] - out[i][j])**2
         return 0.5*err
 
     def alg_bp(self, x, t, dw_old, lam, alph, bet,  n):

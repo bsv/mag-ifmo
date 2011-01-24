@@ -10,7 +10,7 @@ from scipy.signal import butter, lfilter
 from random import randrange as rand
 from math import *
 from per_net.per_net import *
-from gnuradio import *
+from bpnn import NN
 
 
 N = 1000
@@ -108,9 +108,9 @@ plot(y1[:100])
 
 # Тренировочные данные
 
-npack = 4
-sample = s_qask16
-target = aa#repeat(aa, FsFd)
+npack = 1
+sample = y1
+target = repeat(aa, FsFd)
 
 print "SAMPLE = ", len(sample)
 
@@ -124,8 +124,8 @@ nlearn = 100 # количество обучающих выборок
 print "len X = ", len(x)
 print 'len test = ', len(test)
 
-pnet = per_net([npack, 100, 1], elman = 0)
-epoch = pnet.per_train(x[:nlearn], test[:nlearn], 1000, 0.01, 0.2)
+pnet = per_net([npack, 16, 1], elman = 1)
+epoch = pnet.per_train(x[:nlearn], test[:nlearn], 1000, 0.001, 0.01)
 
 #
 naerr = 0
