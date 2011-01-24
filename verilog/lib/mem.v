@@ -1,35 +1,20 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    17:09:13 12/20/2010 
-// Design Name: 
-// Module Name:    mem
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
 
 `define READ_COM        0
 `define WRITE_COM       2
 `define ERASE_BLOCK_COM 6
 
+`define NOCOM 0
+`define READ  1
+`define WRITE 2
+`define ERASE 3
+
 module mem(
 	input wire clk, // 40 ns - 25 Mhz
 	input wire reset,
 
-	input wire write,
-	input wire read,
-    //input wire erase,
+    input wire run,
+	input wire [1:0] com, // 0 - nocom, 1 - read, 2 - write, 3 - erase 
 	
 	input wire [21:0] addr,	
 	inout [15:0] data,
@@ -131,7 +116,6 @@ module mem(
 	always@*
 		begin
 			data_next = data_reg;
-			//addr_next = gl_addr;
 			cs_next = NF_CE;
 			out_en_next = NF_OE;
 			write_en_next = NF_WE;
@@ -153,7 +137,7 @@ module mem(
 								data_next = gl_data;
                                 out_data_next = 1;
 								
-								state_next = START_WRITE/*DATA_WRITE*/;
+								state_next = START_WRITE;
 							end
 					end
                 START_WRITE:
@@ -166,32 +150,20 @@ module mem(
 					begin
                         cs_next = 1;
 						write_en_next = 1;
-						state_next = END_WRITE;
-					end
-				END_WRITE:
-					begin
                         out_data_next = 0;
-						status_next = 1;
+                        status_next = 1;
 						state_next = IDLE;
 					end
 				ENABLE_READ:
 					begin
 						cs_next = 0;
-						state_next = BYTE_READ;
-					end
-				BYTE_READ:
-					begin
-						out_en_next = 0;
-						//BYTE = 0;
+                        out_en_next = 0;
+                        //BYTE = 0;
 						state_next = DATA_READ;
 					end
 				DATA_READ:
 					begin
 						data_next = {NF_A0, NF_D, SPI_MISO};
-						state_next = END_READ;
-					end
-				END_READ:
-					begin						
                         cs_next = 1;
 						status_next = 1;
 						out_en_next = 1;
@@ -241,17 +213,28 @@ module mem(
                     begin
                         gl_endop_next = 0;
                         com_ctr_next = 0;
-                        if(read)
+
+                        if(run)
                             begin
-                                com_ctr_next = 2;
-                                addr_com_mem_next = `READ_COM; // READ_RESET 1
                                 gl_state_next = START;
-                            end
-                        if(write)
-                            begin
-                                com_ctr_next = 4;
-                                addr_com_mem_next = `WRITE_COM; // PROGRAM 1
-                                gl_state_next = START;
+                                case(com)
+                                    `READ:
+                                        begin 
+                                            com_ctr_next = 2;
+                                            addr_com_mem_next = `READ_COM; // READ_RESET 1
+                                        end
+                                    `WRITE:
+                                        begin
+                                            com_ctr_next = 4;
+                                            addr_com_mem_next = `WRITE_COM; // PROGRAM 1
+                                        end
+                                    `ERASE:
+                                        begin
+                                            com_ctr_next = 6;
+                                            addr_com_mem_next = `ERASE_BLOCK_COM;
+                                        end
+                                    default: gl_state_next = IDLE;
+                                endcase
                             end
                     end
                 START:
@@ -275,21 +258,20 @@ module mem(
                                 end
                             else
                                 begin
+                                    case(com_addr)
+                                        22'hBA: gl_addr_next = addr;
+                                        default: gl_addr_next = com_addr;
+                                    endcase
+
                                     case(com_data)
-                                        `READ_COM:
+                                        0: gl_read_next = 1;
+                                        16'hBD: 
                                             begin
-                                                gl_addr_next = addr;
-                                                gl_read_next = 1;
-                                            end
-                                        `WRITE_COM:
-                                            begin
-                                                gl_addr_next = addr;
                                                 gl_data_next = data;
                                                 gl_write_next = 1;
                                             end
                                         default:
                                             begin
-                                                gl_addr_next = com_addr;
                                                 gl_data_next = com_data;
                                                 gl_write_next = 1;
                                             end                              
@@ -304,7 +286,6 @@ module mem(
         mem_command mcom(addr_com_mem, com_addr, com_data);
 
 endmodule
-
 
 module mem_command(
     input wire  [7:0] addr,
@@ -322,8 +303,8 @@ module mem_command(
                     end
                 1: // READ_RESET 2 
                     begin
-                        addr_out = 0;
-                        data_out = `READ_COM;
+                        addr_out = 22'hBA;
+                        data_out = 0;
                     end
                 2: // PROGRAM 1 = WRITE_COM
                     begin
@@ -342,8 +323,38 @@ module mem_command(
                     end
                 5: // PROGRAM 4
                     begin
-                        addr_out = 0;
-                        data_out = `WRITE_COM;
+                        addr_out = 22'hBA;
+                        data_out = 16'hBD;
+                    end
+                6: // BLOCK ERASE 1
+                    begin
+                        addr_out = 22'hAAA;
+                        data_out = 16'hAA;
+                    end
+                7: // BLOCK ERASE 2
+                    begin
+                        addr_out = 22'h555;
+                        data_out = 16'h55;
+                    end
+                8: // BLOCK ERASE 3
+                    begin
+                        addr_out = 22'hAAA;
+                        data_out = 16'h80;
+                    end
+                9: // BLOCK ERASE 4
+                    begin
+                        addr_out = 22'hAAA;
+                        data_out = 16'hAA;
+                    end
+                10: // BLOCK ERASE 5
+                    begin
+                        addr_out = 22'h555;
+                        data_out = 16'h55;
+                    end
+                11: // BLOCK ERASE 6
+                    begin
+                        addr_out = 22'hBA;
+                        data_out = 16'h30;
                     end
                 default: 
                     begin

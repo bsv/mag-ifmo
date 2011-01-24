@@ -108,9 +108,9 @@ plot(y1[:100])
 
 # Тренировочные данные
 
-npack = 1
-sample = y1
-target = repeat(aa, FsFd)
+npack = 4
+sample = s_qask16
+target = aa
 
 print "SAMPLE = ", len(sample)
 
@@ -124,7 +124,7 @@ nlearn = 100 # количество обучающих выборок
 print "len X = ", len(x)
 print 'len test = ', len(test)
 
-pnet = per_net([npack, 16, 1], elman = 1)
+pnet = per_net([npack, 16, 1], elman = 0)
 epoch = pnet.per_train(x[:nlearn], test[:nlearn], 1000, 0.001, 0.01)
 
 #
