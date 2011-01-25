@@ -1,5 +1,35 @@
 # -*- coding: utf-8 -*-
 
+from per_net.per_net import *
+import random
+
+def addNoise(signal, m, s):
+    
+    noise = []
+    for i in xrange(len(signal)):
+        noise += [float(signal[i] + random.gauss(m, s))]
+    return noise
+
+def netdem(source, target, ndiff, npack = 10, nlearn = 500, epoch = 100):
+    
+    diffx = []
+
+    for i in xrange(len(source)):
+        val = 0
+        for j in xrange(ndiff):
+            if(i + j < len(source)):
+                val += source[i+j]
+        diffx += [(val/ndiff)]
+
+    sample = diffx
+
+    x = [sample[i-npack:i] for i in xrange(npack, len(sample)+1, npack)]
+    test = [[target[i]] for i in xrange(len(target))]
+
+    pnet = per_net([npack, 4, 1], elman = 0)    
+    epoch = pnet.per_train(x[:nlearn], test[:nlearn], epoch, 0.001, 0.01)
+
+    return pnet, x
 
 def repeat(x, n):
     y = []

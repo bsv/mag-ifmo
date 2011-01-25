@@ -105,8 +105,8 @@ class sofm_net:
                 #if ((i % 10000) == 0):
                 #    print i
                 #print self.w
-            #qe = self.quant_err(x)
-            #print epoch, qe
+            qe = self.quant_err(x)
+            print epoch, qe
             #if(qe < eps):
             #    print 'epoch = ', epoch, 'qe =', qe
             #    return epoch

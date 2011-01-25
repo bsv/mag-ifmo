@@ -6,6 +6,7 @@ from math import *
 from per_net.per_net import *
 import random
 from func import *
+from sofm_hwsim.sofm_net import *
 
 N = 1000
 
@@ -24,37 +25,34 @@ for bit in bits:
         t += 1/Fs
 
 print 'Len s_fsk = ', len(s_fsk)
-plot(range(len(s_fsk)), s_fsk)
+
+scale = 2000
+
+subplot(211)
+plot(range(scale), s_fsk[:scale])
 
 #show()
 
 # add noise - просто изменение данных не шум как таковой
-noise = []
-for i in xrange(len(s_fsk)):
-    noise += [float(s_fsk[i] + random.gauss(1, 1))]
+noise = addNoise(s_fsk, 1, 0.5)
 
 # Нейронная сеть
 
-npack = 25
+npack = 10
 nlearn = 500
+ndiff = 1
+epoch = 200
 
-sample = s_fsk
+source = s_fsk#noise
 target = repeat(bits, int(FsFd/npack))
 
-x = [sample[i-npack:i] for i in xrange(npack, len(sample)+1, npack)]
-test = [[target[i]] for i in xrange(len(target))]
-
-print len(x)
-print len(test)
-
-pnet = per_net([npack, 10, 1], elman = 0)
-epoch = pnet.per_train(x[:nlearn], test[:nlearn], 500, 0.01, 0.2)
+pnet, x = netdem(source, target, ndiff, npack, nlearn, epoch)
 
 #
 nerr = 0
 
-sample = s_fsk
-x = [sample[i-npack:i] for i in xrange(npack, len(sample)+1, npack)]
+#sample = del_noise
+#x = [sample[i-npack:i] for i in xrange(npack, len(sample)+1, npack)]
 
 out = []
 for i in xrange(len(x)):
@@ -68,15 +66,18 @@ print 'Net error = ', nerr/len(x)
 
 scale = 1000
 
-subplot(311)
+subplot(411)
 t_plot = range(len(s_fsk))
 plot(t_plot[:scale], s_fsk[:scale])
 
+subplot(412)
+plot(t_plot[:scale], noise[:scale])
+
 bit_out = repeat(out, npack)
 
-subplot(312)
+subplot(413)
 plot(t_plot[:scale], bit_out[:scale])
-axis([0, t_plot[scale], -0.2, 1.2])
+axis([0, t_plot[scale], -0.2, max(bit_out) + 0.2])
 
 print 'Target len = ', len(target)
 print 'Bit out len = ', len(bit_out)
@@ -86,8 +87,8 @@ bits_ideal = repeat(bits, FsFd)
 
 print "Bit ideal = ", len(bits_ideal)
 
-subplot(313)
+subplot(414)
 plot(t_plot[:scale], bits_ideal[:scale])
-axis([0, t_plot[scale], -0.2, 1.2])
+axis([0, t_plot[scale], -0.2, max(bits_ideal) + 0.2])
 
 show()

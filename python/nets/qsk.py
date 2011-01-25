@@ -32,8 +32,6 @@ b1 = repeat(b1, FsFd)
 # Формируем аналоговый сигнал
 t = [i/Fs for i in range(N*FsFd)] # дискретное время
 
-print t[:10]
-
 s_qask16 = []
 
 for i in xrange(N*FsFd):
@@ -65,9 +63,8 @@ for i in xrange(N*FsFd):
 fy1 = lfilter(b, a, y1)
 fy2 = lfilter(b, a, y2)
 
-
-fy1 = fy1[3:len(fy1):FsFd] 
-fy2 = fy2[3:len(fy2):FsFd]
+fy1 = fy1[FsFd-1:len(fy1):FsFd] 
+fy2 = fy2[FsFd-1:len(fy2):FsFd]
 
 aerr = 0
 berr = 0
@@ -88,7 +85,7 @@ for i in xrange(len(fy1)):
         fy2[i] = 3
     
     if(fy1[i] != aa[i]):
-        print i, '.', fy1[i], aa[i]
+        #print i, '.', fy1[i], aa[i]
         aerr += 1
     if(fy2[i] != bb[i]):
         berr += 1
@@ -108,7 +105,7 @@ plot(y1[:100])
 
 # Тренировочные данные
 
-npack = 4
+npack = FsFd
 sample = s_qask16
 target = aa
 
@@ -124,8 +121,8 @@ nlearn = 100 # количество обучающих выборок
 print "len X = ", len(x)
 print 'len test = ', len(test)
 
-pnet = per_net([npack, 16, 1], elman = 0)
-epoch = pnet.per_train(x[:nlearn], test[:nlearn], 1000, 0.001, 0.01)
+pnet = per_net([npack, 5, 1], elman = 1)
+epoch = pnet.per_train(x[:nlearn], test[:nlearn], 100, 0.001, 0.1)
 
 #
 naerr = 0

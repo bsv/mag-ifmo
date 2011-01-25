@@ -171,6 +171,7 @@ class per_net:
                 print epoch,'eps=',e
                 return epoch
             lam = math.exp(-1/(e*e))
+            #lam = 1
             dw_old = copy.deepcopy(dw_cur)
         print epoch,'eps=',e
         return count
