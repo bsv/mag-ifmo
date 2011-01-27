@@ -12,9 +12,9 @@ N = 1000
 
 bits = [randint(2) for i in xrange(N)]
 Fd = 2000 # Символьная скорость
-FsFd = 50 # Количество отсчетов на один символ Fs/Fd
+FsFd = 40 # Количество отсчетов на один символ Fs/Fd
 Fs = Fd * FsFd # Частота дискретизации
-f = [3000, 6000]
+f = [4000, 8000]
 time = [i/Fs for i in xrange(FsFd)] # Дискретное время для одной посылки
 
 s_fsk = []
@@ -26,10 +26,10 @@ for bit in bits:
 
 print 'Len s_fsk = ', len(s_fsk)
 
-scale = 2000
+#scale = 1000
 
-subplot(211)
-plot(range(scale), s_fsk[:scale])
+#subplot(211)
+#plot(range(scale), s_fsk[:scale])
 
 #show()
 
@@ -38,12 +38,12 @@ noise = addNoise(s_fsk, 1, 0.5)
 
 # Нейронная сеть
 
-npack = 10
-nlearn = 500
+npack = 20
+nlearn = 100
 ndiff = 1
-epoch = 200
+epoch = 2000
 
-source = s_fsk#noise
+source = noise
 target = repeat(bits, int(FsFd/npack))
 
 pnet, x = netdem(source, target, ndiff, npack, nlearn, epoch)
@@ -51,7 +51,7 @@ pnet, x = netdem(source, target, ndiff, npack, nlearn, epoch)
 #
 nerr = 0
 
-#sample = del_noise
+#sample = s_fsk
 #x = [sample[i-npack:i] for i in xrange(npack, len(sample)+1, npack)]
 
 out = []
@@ -77,7 +77,7 @@ bit_out = repeat(out, npack)
 
 subplot(413)
 plot(t_plot[:scale], bit_out[:scale])
-axis([0, t_plot[scale], -0.2, max(bit_out) + 0.2])
+axis([0, t_plot[scale-1], -0.2, 1.2])
 
 print 'Target len = ', len(target)
 print 'Bit out len = ', len(bit_out)
@@ -89,6 +89,6 @@ print "Bit ideal = ", len(bits_ideal)
 
 subplot(414)
 plot(t_plot[:scale], bits_ideal[:scale])
-axis([0, t_plot[scale], -0.2, max(bits_ideal) + 0.2])
+axis([0, t_plot[scale-1], -0.2, max(bits_ideal) + 0.2])
 
 show()

@@ -26,7 +26,7 @@ def netdem(source, target, ndiff, npack = 10, nlearn = 500, epoch = 100):
     x = [sample[i-npack:i] for i in xrange(npack, len(sample)+1, npack)]
     test = [[target[i]] for i in xrange(len(target))]
 
-    pnet = per_net([npack, 4, 1], elman = 0)    
+    pnet = per_net([npack, 4, 1], elman = 1)    
     epoch = pnet.per_train(x[:nlearn], test[:nlearn], epoch, 0.001, 0.01)
 
     return pnet, x
