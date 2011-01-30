@@ -14,14 +14,15 @@ class per_net:
     elman = 0
 
     # struct_net = [count_in, count_neuro_in layer1, ...]
-    # Если elman != 0, то формируется сеть Элмана с доп слоем
+    # Если elman != 0, то формируется сеть Элмана с доп слоем, 
+    # число elman указывает с какого слоя подается обратная связь
     def __init__(self, struct_net = [], w = [], elman = 0): 
    
         self.count_input = struct_net[0]
         self.elman = elman
         if(elman != 0):
-            self.count_input += struct_net[1] # Добавляем к количеству входов количество выходов первого скрытого слоя 
-            self.elman_layer = [0 for i in xrange(struct_net[1])]
+            self.count_input += struct_net[elman] # Добавляем к количеству входов количество выходов первого скрытого слоя 
+            self.elman_layer = [0 for i in xrange(struct_net[elman])]
         self.struct_net = struct_net[1:]
         self.count_layer = len(struct_net) - 1 # -1 так как первый член списка-это 
         # количество входов, остальные члены - это количество нейронов в слоях 
@@ -73,7 +74,7 @@ class per_net:
                 out[num_l].append(out_i)
             # Значения выходов предыдущего слоя являются входами последующего
             input_val = out[num_l]
-            if(num_l == 0) & (self.elman != 0):
+            if(num_l == self.elman-1) & (self.elman != 0):
                 #self.elman_layer = [1/(1 + math.exp(-i)) for i in input_val]
                 self.elman_layer = copy.deepcopy(input_val)
         return out
@@ -146,7 +147,7 @@ class per_net:
         #Проверка соответствия входов и выходов структуре сети
         for i in xrange(len(x)):
             if self.elman != 0:
-                if len(x[i]) != self.count_input - self.struct_net[0]:
+                if len(x[i]) != self.count_input - self.struct_net[self.elman - 1]:
                     print 'Количество входов в обучающем множестве не соответствует структуре сети' 
                     return 0
             elif(len(x[i]) != self.count_input):
