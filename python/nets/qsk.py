@@ -42,11 +42,11 @@ noise = []
 for i in xrange(len(s_qask16)):
     noise += [float(s_qask16[i] + random.gauss(3,1))]
 
-subplot(211)
-plot(t[:200], s_qask16[:200])
+#subplot(211)
+#plot(t[:200], s_qask16[:200])
 
-subplot(212)
-plot(t[:200], noise[:200])
+#subplot(212)
+#plot(t[:200], noise[:200])
 
 #show()
 
@@ -93,11 +93,11 @@ for i in xrange(len(fy1)):
 print 'A error = ', aerr/len(aa)
 print 'B error = ', berr/len(bb)
 
-subplot(211)
-plot(aa[:100])
+#subplot(211)
+#plot(aa[:100])
 
-subplot(212)
-plot(y1[:100])
+#subplot(212)
+#plot(y1[:100])
 
 #show()
 
@@ -105,24 +105,34 @@ plot(y1[:100])
 
 # Тренировочные данные
 
+ndiff = 1
 npack = FsFd
-sample = s_qask16
+epoch = 10000
+source = s_qask16
 target = aa
+nlearn = 200
 
-print "SAMPLE = ", len(sample)
+#num_in = 8
+#num_neuron = 16
+#num_epoch = 10
+#net_in = vec2mas(s_qask16, num_in)
 
-#x = [sample[i-npack+1:i+1] for i in range(npack-1, len(sample))]
-#test = [[target[i]] for i in xrange(npack-1, len(target))]
-x = [sample[i-npack:i] for i in range(npack, len(sample) + 1, npack)]
-test = [[target[i]] for i in xrange(len(target))]
+#koh_net = sofm_net([num_in, num_neuron])
+#koh_net.net_train(net_in, num_epoch)
 
-nlearn = 100 # количество обучающих выборок
+#net_out = koh_net.masOut(net_in)
 
-print "len X = ", len(x)
-print 'len test = ', len(test)
+#subplot(211)
+#plot(s_qask16)
 
-pnet = per_net([npack, 5, 1], elman = 1)
-epoch = pnet.per_train(x[:nlearn], test[:nlearn], 100, 0.001, 0.1)
+#subplot(212)
+#plot(net_out)
+
+#show()
+
+#exit()
+
+pnet, x = netdem(source, target, ndiff, npack, nlearn, epoch)
 
 #
 naerr = 0

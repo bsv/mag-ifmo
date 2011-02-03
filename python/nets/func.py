@@ -14,17 +14,35 @@ def netdem(source, target, ndiff, npack = 10, nlearn = 500, epoch = 100):
     
     diffx = []
 
-    for i in xrange(len(source)):
-        val = 0
-        for j in xrange(ndiff):
-            if(i + j < len(source)):
-                val += source[i+j]
-        diffx += [(val/ndiff)]
+#    for i in xrange(len(source)):
+#        val = 0
+#        for j in xrange(ndiff):
+#            if(i + j < len(source)):
+#                val += source[i+j]
+#        diffx += [(val/ndiff)]
 
-    sample = diffx
+#    sample = diffx
+
+
+    sample = source
+    
+    '''x = []
+    for i in xrange(len(sample)):
+        frame = []
+        for j in xrange(npack):
+            if (i-j) < 0:
+                frame += [0]
+            else:
+                frame += [sample[i-j]]
+        x += [frame]'''
+
 
     x = [sample[i-npack:i] for i in xrange(npack, len(sample)+1, npack)]
     test = [[target[i]] for i in xrange(len(target))]
+    
+    print 'LEN source = ', len(source)
+    print 'LEN X = ', len(x)
+    print 'LEN test = ', len(test)
 
     pnet = per_net([npack, 4, 1], elman = 1)    
     epoch = pnet.per_train(x[:nlearn], test[:nlearn], epoch, 0.001, 0.01)
