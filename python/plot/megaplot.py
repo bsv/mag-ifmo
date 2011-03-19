@@ -3,9 +3,8 @@ from  __future__ import division
 
 import sys, time
 
-sys.path += ['../nets']
+sys.path += ['../']
 
-from sofm_hwsim.sofm_net import *
 from com import *
 from scipy.signal import butter, lfilter
 
@@ -33,12 +32,12 @@ class PlotGui(QWidget):
     com_reader = 0
     border = 0.1
     scale = 100
-    max_value = 16384
+    max_value = 255
     mas = []
     f_data = 0
     run = 0
 
-    def __init__(self, num_in = 16, num_epoch = 1,  scale = 100, parent=None):
+    def __init__(self,  scale = 100, parent=None):
         
         QWidget.__init__(self, parent)
         
@@ -50,12 +49,6 @@ class PlotGui(QWidget):
         self.run = 0
         self.scale = scale
         self.mas = [0 for i in xrange(self.scale)]
-
-        self.num_in = num_in
-        self.num_neuron = 2
-        self.num_epoch = num_epoch
-        self.net = sofm_net([self.num_in, self.num_neuron])
-        self.train = 0
 
     def draw(self, data_mas, y_start, border, k, size):
         
@@ -96,18 +89,6 @@ class PlotGui(QWidget):
         
         self.draw(self.mas, 256, [x_border, y_border], [kx, ky], size)
 
-        # Обработка данных нейронной сетью
-        #net_in = data_prepare(self.mas, self.num_in)
-        #if(self.train == 0):
-        #    self.net.net_train(net_in, self.num_epoch)
-        #    self.train = 1
-
-        #net_out = []
-        #for cur in net_in:
-        #    out = self.net.sim_net(cur)
-        #    net_out += [out for i in xrange(self.num_in)]
-        #self.draw(net_out, 0, [x_border, y_border], [kx, ky*50], size)
-
         # Обработка данных фильтром нижних частот
         (b, a) = butter(5, 0.1, btype = 'low')
         bout = lfilter(b, a, self.mas)
@@ -122,14 +103,10 @@ class PlotGui(QWidget):
         #if self.com_reader.isOpen():
             t = time.time()    
             for x in xrange(self.scale):
-                ch1 = self.com_reader.read()
-                ch2 = self.com_reader.read()
-                #print 'ch1 = ', ch1
-                #print 'ch2 = ', ch2
-                ch = ch1 << 8 | ch2
+                ch = self.com_reader.read()
                 #print 'CH = ', ch
-                v = ch*2.5/self.max_value + 0.4
-                self.mas[x] = ch/self.max_value*256
+                v = ch*5/self.max_value
+                self.mas[x] = ch
                 self.f_data.write("%d\n" % ch)
                 #print "%d" % ord(ch)
             #self.mas = [self.com_reader.read() for x in xrange(self.scale)]
@@ -161,7 +138,7 @@ class PlotGui(QWidget):
 def main (args) :
 
     app = QApplication (args)
-    pg = PlotGui(int(args[1]), int(args[2]), int(args[3]))
+    pg = PlotGui(int(args[1]))
     pg.show ()
     pg.startRead()
     app.exec_()

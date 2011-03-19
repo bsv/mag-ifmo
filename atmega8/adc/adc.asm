@@ -106,7 +106,7 @@ RESET:
     outi ucsrb, (1<<RXEN)|(1<<TXEN) ; разрешить прием и передачу USART
 
 ;Настрйка АЦП.
-    outi admux,0b01100001 ; pin pc0(adc0)
+    outi admux,0b01100001 ; pin pc1(adc1)
 	outi adcsra,(1<<ADEN)|(1<<ADIE)|(1<<ADSC)|(1<<ADFR)|(7<<ADPS0)
 	
 	;cbi	ADCSRA,ADEN ; ацп выключен !!!!!!!!!!!!!!!!!

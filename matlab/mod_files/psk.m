@@ -12,7 +12,7 @@ time = (1:N*FsFd)/Fs;
 
 s_psk = cos(2*pi*Fc*time + pi/2*s(ceil(Fd*time)));
 
-scale = 500
+scale = 500;
 
 plot(s_psk(1:scale));
 
@@ -20,27 +20,33 @@ plot(s_psk(1:scale));
 
 npack = 20;
 source = s_psk;
-target = s;
+target = repmat(s, round(FsFd/npack), 1);
+target = target(:)';
 nlearn = 500;
 
-P = {};
-for i = 1:npack:numel(s_psk)
-    P = [P {source(i:i + npack - 1)'}];
-end
-
-T = {};
-for i = 1:numel(s)
-    T = {T {repmat(target(i), 1, round(FsFd/npack))}};
-end
-
+P = groupnet(source, npack);
+T = groupnet(target, 1);
 
 net = newff(P(1:nlearn), T(1:nlearn), 4, '', 'traingd');
+
+%for i = 1:100
+%    [net, y, e] = adapt(net, P, T);
+%    i
+%    sumerr = sum([e{:}])
+%end
+
 net = train(net, P(1:nlearn), T(1:nlearn));
 
 Y = sim(net, P);
 
-Y = [Y{:}];
+Y = round([Y{:}]);
 
+err = symerr(target, Y)
+
+subplot(2, 1, 1)
+plot(target(1:scale));
+
+subplot(2, 1, 2)
 plot(Y(1:scale));
 
 

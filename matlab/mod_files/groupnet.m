@@ -3,7 +3,7 @@ function [ out ] = groupnet(vec, num)
 
     out = [];
     for i = num:num:numel(vec)
-        out = [[out] vec(i-num+1:i)];
+        out = [out, {vec(i-num+1:i)'}];
     end
 
 end
