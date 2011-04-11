@@ -2,7 +2,7 @@ init;
 
 m = 0.65; % коэффициент модуляции
 
-sfm = modulate(sm, fc, fd, 'fm', m); % фазовая модуляция
+sfm = modulate(sm, fc, fd, 'fm', m); %  частотная модуляция
 
 subplot(2, 1, 1);
 plot(time, sm);

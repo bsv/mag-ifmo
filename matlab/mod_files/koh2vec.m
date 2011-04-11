@@ -5,10 +5,10 @@ function [ simres ] = koh2vec(onet, num_in, time_ctr)
 
     simres = [];
     for i = 1:numel(onet)
-        if (onet{i}(1) - onet{i}(2)) > 0
-            simres = [simres ones(1, num_in)];
-        else
-            simres = [simres zeros(1, num_in)];
+        for j = 1:numel(onet{i})
+            if(onet{i}(j) == 1)
+                simres = [simres repmat(j-1, 1, num_in)];
+            end
         end
     end
 

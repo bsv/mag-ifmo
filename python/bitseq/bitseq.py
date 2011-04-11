@@ -44,8 +44,8 @@ def getBitSeq(data, Fd, Fs):
 bit = readFile(sys.argv[1])
 data = readFile(sys.argv[2])
 
-print bit[:10]
-print data[:10]
+#print bit[:10]
+#print data[:10]
 
 Fd = 1 # символьная скорость
 Fs = 2 # частота дискретизации
@@ -62,7 +62,7 @@ plot(data[:scale])
 subplot(212)
 plot(bout[:scale])
 
-show()
+#show()
 
 bit_seq = getBitSeq(data, Fd, Fs)
 bit_seq = [0] + bit_seq
