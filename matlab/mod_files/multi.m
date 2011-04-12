@@ -60,42 +60,20 @@ mainsig = sask;
 noise =  awgn(mainsig, snr, 'measured'); 
 source = noise;
 target = sig;
-nlearn = 0.5*N*kd;
+nlearn = 0.1*N*kd;
 
 P = groupnet(source, 1);
 T = groupnet(target, 1);
 
-net = newfftd(P(1:nlearn), T(1:nlearn), [0:npack-1], 4);
+net = newfftd(P(1:nlearn), T(1:nlearn), [0:3], 4);
 net = train(net, P(1:nlearn), T(1:nlearn));
-
-%load ask_1000_50 ask_w
-%net.IW = ask_w{1};
-%net.LW = ask_w{2};
-%net.b = ask_w{3};
 
 Y = sim(net, P(desync*kd + 1:end));
 Y = ([Y{:}]);
 
-%% 2) Обучаем сеть выделять сигнал
-source = Y;
-target = sig; 
-
-P2 = groupnet(source, 1);
-T2 = groupnet(target, 1);
-
-net2 = newff(P2(1:nlearn), T2(1:nlearn), 4);
-net2 = train(net2, P2(1:nlearn), T2(1:nlearn));
-
-%net2.IW = ask_w{4};
-%net2.LW = ask_w{5};
-%net2.b = ask_w{6};
-
-simres = sim(net2, P2(desync*kd + 1:end));
-simres = round([simres{:}]);
-
 %% Выход персептонной сети подаем на вход сети Кохонена
 
-num_in = 4%0.25 * kd; % 0.25 от количиства отсчетов на символ
+num_in = 4;
 coh_in = groupnet(Y, num_in);
 %coh_in = Y;
 netc = newc(coh_in(1:nlearn), 2); 
@@ -105,86 +83,64 @@ netc = newc(coh_in(1:nlearn), 2);
 %    i
 %end
 netc = train(netc, coh_in(1:nlearn));
-iw = netc.IW;
-
-% Создаем новую сеть
-%coh_in = Y;
-%netc = newc([0 2], 2, 0.01, 0.001); % 2 нейрона
-%netc.inputWeights{1}.delays = [0:num_in-1];
-%netc.IW = iw;
-
-%netc.IW = ask_w{4};
-%netc.LW = ask_w{5};
-%netc.b = ask_w{6};
 
 onet = sim(netc, coh_in(desync*kd + 1:end));
 simres = koh2vec(onet, num_in, numel(Y(desync*kd + 1:end)));
 %simres = vec2ind(onet) - 1;
-%
 
-%err = symerr(target, simres)
 
-target_desync = target(desync*kd + 1:end);
-simres = simres(desync*kd + 1:end);
-Y = Y(desync*kd + 1:end);
+%% Оцениваем результат работы сети Кохонена
 
-%% Построение графиков
-figure
-scale = 5000;
+s = round(rand(1, N));
+sig = repmat(s, kd, 1);
+sig = sig(:)';
 
-%simres(find(simres>1)) = 1;
-%simres(find(simres < 0)) = 0;
+m = 0.65; % коэффициент модуляции
 
-%[b, a] = butter(5, 10*rate/Fs);
-%simres = round(filtfilt(b, a, simres));
+spsk = modulate(sig, Fc, Fs, 'pm', m) + 1; % фазовая модуляция
+sfsk = modulate(sig, Fc, Fs, 'fm', m) + 1; % частотная модуляция
+sask = modulate(sig, Fc, Fs, 'amdsb-tc', m) + 1; % амплитудная модуляция
 
-subplot(4, 1, 1)
-plot(noise(1:scale));
-title('FILT output');
-axis([0 scale-1 min(noise)-0.2 max(noise) + 0.2]);
+mainsig = sask;
 
-subplot(4, 1, 2)
-plot(Y(1:scale));
-title('TDNN output');
-axis([0 scale-1 min(Y)-0.2 max(Y) + 0.2]);
+scale = 1000;
+desync = 0;
 
-subplot(4, 1, 3)
-plot(simres(1:scale));
-axis([0 scale-1 min(simres)-0.2 max(simres) + 0.2]);
-title('END output');
+snr = 30;
+noise =  awgn(mainsig, snr, 'measured');
+P = groupnet(noise, 1);
+Y = sim(net, P(desync*kd + 1:end));
+Y = ([Y{:}]);
 
-subplot(4, 1, 4)
-plot(target(1:scale));
-axis([0 scale-1 min(target)-0.2 max(target) + 0.2]);
-title('TARGET output');
+coh_in = groupnet(Y, num_in);
+onet = sim(netc, coh_in(desync*kd + 1:end));
+simres = koh2vec(onet, num_in, numel(Y(desync*kd + 1:end)));
 
-%% Проверяем работу сети на N новых символах
-st = round(rand(1, N));
-sigt = repmat(st, kd, 1);
-sigt = sigt(:)';
+[b, a] = butter(5, 5*rate/Fs);
+simres = round(filtfilt(b, a, simres));
 
-snr = 20;
-source = awgn(mainsig, snr, 'measured');
+simres = [simres zeros(1, desync*kd)];
 
-Pt = groupnet(source, 1);
-Yt = sim(net, Pt(desync*kd + 1:end));
-Yt = ([Yt{:}]);
-
-source = Yt;
-
-Pt2 = groupnet(source, 1);
-simrest = sim(net2, Pt2(desync*kd + 1:end));
-simrest = round([simrest{:}]);
-
-bit_seq = []
-for i = kd/2:kd:numel(simrest)
-    bit_seq = [bit_seq simrest(i)];
+bit_seq = [];
+for i = kd/2 + kd*(1 - desync):kd:numel(simres)
+    bit_seq = [bit_seq simres(i)];
 end
 
-%bit_seq = decnrz(simres, kd);
-
 numel(bit_seq)
-err = symerr(st, bit_seq)/N
+err = symerr(s(2:end), bit_seq)/N
+
+subplot(3,1,1);
+plot(Y(1:scale));
+axis([0 scale-1 min(Y)-0.2 max(Y) + 0.2]);
+
+subplot(3,1,2)
+plot(simres(1:scale))
+axis([0 scale-1 min(simres)-0.2 max(simres) + 0.2]);
+
+subplot(3,1,3)
+plot(sig(1:scale))
+axis([0 scale-1 min(sig)-0.2 max(sig) + 0.2]);
+
 
 %% SAVE net parameters
 
