@@ -13,7 +13,6 @@ kd = round(Fc/rate); % количество отсчетов за символ
 sig = repmat(s, kd, 1);
 sig = sig(:)';
 
-%time = (1:N*FsFd)/Fs;
 m = 0.65; % коэффициент модуляции
 
 %ssk = cos(2*pi*Fc*time + pi/2*s(ceil(Fd*time))); % фазовая модуляция
@@ -56,7 +55,7 @@ desync = 0; % коэффициент рассинхронизации в пре�
 npack = 2*kd;
 snr = 10;
 
-mainsig = sask;
+mainsig = spsk;
 noise =  awgn(mainsig, snr, 'measured'); 
 source = noise;
 target = sig;
@@ -91,7 +90,8 @@ simres = koh2vec(onet, num_in, numel(Y(desync*kd + 1:end)));
 
 %% Оцениваем результат работы сети Кохонена
 
-s = round(rand(1, N));
+nn = 1000;
+s = round(rand(1, nn));
 sig = repmat(s, kd, 1);
 sig = sig(:)';
 
@@ -101,7 +101,7 @@ spsk = modulate(sig, Fc, Fs, 'pm', m) + 1; % фазовая модуляция
 sfsk = modulate(sig, Fc, Fs, 'fm', m) + 1; % частотная модуляция
 sask = modulate(sig, Fc, Fs, 'amdsb-tc', m) + 1; % амплитудная модуляция
 
-mainsig = sask;
+mainsig = spsk;
 
 scale = 1000;
 desync = 0;
@@ -113,13 +113,13 @@ Y = sim(net, P(desync*kd + 1:end));
 Y = ([Y{:}]);
 
 coh_in = groupnet(Y, num_in);
-onet = sim(netc, coh_in(desync*kd + 1:end));
+onet = sim(netc, coh_in);
 simres = koh2vec(onet, num_in, numel(Y(desync*kd + 1:end)));
 
-[b, a] = butter(5, 5*rate/Fs);
-simres = round(filtfilt(b, a, simres));
+%[b, a] = butter(5, 5*rate/Fs);
+%simres = round(filtfilt(b, a, simres));
 
-simres = [simres zeros(1, desync*kd)];
+%simres = [simres zeros(1, desync*kd)];
 
 bit_seq = [];
 for i = kd/2 + kd*(1 - desync):kd:numel(simres)
@@ -127,17 +127,22 @@ for i = kd/2 + kd*(1 - desync):kd:numel(simres)
 end
 
 numel(bit_seq)
-err = symerr(s(2:end), bit_seq)/N
+err = symerr(s(2:end), bit_seq)/nn
+%err = symerr(simres, sig(desync*kd + 1:end))/numel(simres)
 
-subplot(3,1,1);
+subplot(4,1,1);
+plot(noise(1:scale));
+axis([0 scale-1 min(noise)-0.2 max(noise) + 0.2]);
+
+subplot(4,1,2);
 plot(Y(1:scale));
 axis([0 scale-1 min(Y)-0.2 max(Y) + 0.2]);
 
-subplot(3,1,2)
+subplot(4,1,3)
 plot(simres(1:scale))
 axis([0 scale-1 min(simres)-0.2 max(simres) + 0.2]);
 
-subplot(3,1,3)
+subplot(4,1,4)
 plot(sig(1:scale))
 axis([0 scale-1 min(sig)-0.2 max(sig) + 0.2]);
 
